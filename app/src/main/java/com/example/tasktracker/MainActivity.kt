@@ -1,47 +1,56 @@
+
 package com.example.tasktracker
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.room.Room
+import com.example.tasktracker.data.local.AppDatabase
+import com.example.tasktracker.data.repository.AppRepository
+import com.example.tasktracker.ui.navigation.AppNavigation
 import com.example.tasktracker.ui.theme.TaskTrackerTheme
+import com.example.tasktracker.ui.viewmodel.TaskViewModel
+import com.example.tasktracker.ui.viewmodel.TaskViewModelFactory
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
+
+        // Создание базы данных
+        val database = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "task_tracker_database"
+        ).build()
+
+        // Создание репозитория
+        val repository = AppRepository(
+            categoryDao = database.categoryDao(),
+            taskDao = database.taskDao()
+        )
+
+        // Создание фабрики ViewModel
+        val factory = TaskViewModelFactory(repository)
+
+        // Запуск интерфейса
         setContent {
             TaskTrackerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+
+                // Получение ViewModel через Factory
+                val taskViewModel: TaskViewModel = viewModel(
+                    factory = factory
+                )
+
+                // Отображение навигации
+                AppNavigation(
+                    viewModel = taskViewModel
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    TaskTrackerTheme {
-        Greeting("Android")
     }
 }
