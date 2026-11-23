@@ -143,7 +143,7 @@ fun CategoriesScreen(
                                         .size(18.dp)
                                         .background(
                                             color = Color(
-                                                category.colorHex.toULong()
+                                                category.colorHex.toInt()
                                             ),
                                             shape = CircleShape
                                         )
@@ -226,7 +226,7 @@ fun CategoriesScreen(
                             Surface(
                                 modifier = Modifier.size(34.dp),
                                 shape = CircleShape,
-                                color = Color(color.toULong()),
+                                color = Color(color.toInt()),
                                 onClick = {
                                     selectedColor = color
                                 },
