@@ -34,6 +34,10 @@ fun TaskEditScreen(
 
     var expanded by remember { mutableStateOf(false) }
 
+    // Ошибки заполнения формы
+    var titleError by remember(taskId) { mutableStateOf(false) }
+    var categoryError by remember(taskId) { mutableStateOf(false) }
+
     // Загрузка задачи для редактирования
     LaunchedEffect(taskId) {
         if (taskId != null) {
@@ -100,16 +104,31 @@ fun TaskEditScreen(
 
                 OutlinedTextField(
                     value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Название задачи") },
+                    onValueChange = {
+                        title = it
+                        titleError = false
+                    },
+                    label = {
+                        Text("Название задачи")
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    isError = titleError,
+                    supportingText = {
+                        if (titleError) {
+                            Text("Введите название задачи")
+                        }
+                    }
                 )
 
                 OutlinedTextField(
                     value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Описание задачи") },
+                    onValueChange = {
+                        description = it
+                    },
+                    label = {
+                        Text("Описание задачи")
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp)
@@ -123,7 +142,10 @@ fun TaskEditScreen(
 
                 Box {
                     OutlinedButton(
-                        onClick = { expanded = true },
+                        onClick = {
+                            expanded = true
+                            categoryError = false
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         val selectedCategory = categories.find {
@@ -142,13 +164,13 @@ fun TaskEditScreen(
                         }
                     ) {
                         categories.forEach { category ->
-
                             DropdownMenuItem(
                                 text = {
                                     Text(category.name)
                                 },
                                 onClick = {
                                     selectedCategoryId = category.id
+                                    categoryError = false
                                     expanded = false
                                 }
                             )
@@ -156,28 +178,34 @@ fun TaskEditScreen(
                     }
                 }
 
+                if (categoryError) {
+                    Text(
+                        text = "Выберите категорию",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
                     onClick = {
-                        val categoryId = selectedCategoryId
-
                         when {
                             title.isBlank() -> {
-                                // Пустое название не допускается
+                                titleError = true
                             }
 
-                            categoryId == null -> {
-                                // Категория обязательна
+                            selectedCategoryId == null -> {
+                                categoryError = true
                             }
 
                             taskId == null -> {
                                 viewModel.addTask(
                                     title = title,
                                     description = description,
-                                    categoryId = categoryId
+                                    categoryId = selectedCategoryId!!,
+                                    onSuccess = onBack
                                 )
-                                onBack()
                             }
 
                             editingTask != null -> {
@@ -185,10 +213,10 @@ fun TaskEditScreen(
                                     editingTask!!.copy(
                                         title = title,
                                         description = description,
-                                        categoryId = categoryId
-                                    )
+                                        categoryId = selectedCategoryId!!
+                                    ),
+                                    onSuccess = onBack
                                 )
-                                onBack()
                             }
                         }
                     },
@@ -196,8 +224,11 @@ fun TaskEditScreen(
                     enabled = !isLoading && categories.isNotEmpty()
                 ) {
                     Text(
-                        if (taskId == null) "Создать задачу"
-                        else "Сохранить изменения"
+                        if (taskId == null) {
+                            "Создать задачу"
+                        } else {
+                            "Сохранить изменения"
+                        }
                     )
                 }
 
